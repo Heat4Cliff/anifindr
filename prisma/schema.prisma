@@ -1,0 +1,380 @@
+// Prisma Schema — Anime IR Enterprise
+// Sesuai 09_DATABASE_SCHEMA.md dan 03_DDD.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== ENUMS ====================
+
+enum AnimeStatus {
+  AIRING
+  FINISHED
+  NOT_YET_AIRED
+  UNKNOWN
+}
+
+enum AnimeSeason {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum WatchPlatform {
+  BSTATION
+  YOUTUBE_MUSE_ASIA
+  CRUNCHYROLL
+  NETFLIX
+  AMAZON_PRIME
+  HIDIVE
+  OTHER
+}
+
+enum EventType {
+  VIEW
+  CLICK
+  BOOKMARK
+  SEARCH
+  RECOMMENDATION_CLICK
+}
+
+enum SearchMode {
+  TFIDF
+  HYBRID
+  FULLTEXT
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+enum RelevanceLabel {
+  NOT_RELEVANT
+  SLIGHTLY_RELEVANT
+  RELEVANT
+  HIGHLY_RELEVANT
+}
+
+// ==================== CORE ENTITIES ====================
+
+model Anime {
+  id             String   @id @default(cuid())
+  malId          Int      @unique
+  title          String
+  titleEnglish   String?
+  titleJapanese  String?
+  synopsis       String?  @db.Text
+  score          Float?
+  rank           Int?
+  popularity     Int?
+  episodes       Int?
+  status         AnimeStatus @default(UNKNOWN)
+  season         AnimeSeason?
+  year           Int?
+  imageUrl       String?
+  trailerUrl     String?
+  airedFrom      DateTime?
+  airedTo        DateTime?
+  type           String?   // TV, Movie, OVA, etc.
+  duration       String?
+  rating         String?   // PG-13, R, etc.
+  source         String?   // Manga, Light Novel, etc.
+  members        Int?
+  favorites      Int?
+  // TF-IDF indexing field — computed from title + synopsis + genres + tags
+  searchVector   String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  genres         AnimeGenre[]
+  studios        AnimeStudio[]
+  watchLinks     WatchLink[]
+  bookmarks      Bookmark[]
+  interactions   Interaction[]
+  searchResults  SearchResult[]
+  relevanceJudgments RelevanceJudgment[]
+
+  @@index([malId])
+  @@index([year])
+  @@index([score])
+  @@index([status])
+  @@index([popularity])
+  @@index([rank])
+  @@map("anime")
+}
+
+model Genre {
+  id    String @id @default(cuid())
+  malId Int    @unique
+  name  String @unique
+  slug  String @unique
+
+  animes AnimeGenre[]
+
+  @@map("genres")
+}
+
+model Studio {
+  id    String @id @default(cuid())
+  malId Int    @unique
+  name  String @unique
+  slug  String
+
+  animes AnimeStudio[]
+
+  @@map("studios")
+}
+
+// Many-to-many join tables
+model AnimeGenre {
+  animeId  String
+  genreId  String
+
+  anime  Anime  @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  genre  Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([animeId, genreId])
+  @@map("anime_genres")
+}
+
+model AnimeStudio {
+  animeId   String
+  studioId  String
+
+  anime   Anime   @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  studio  Studio  @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  @@id([animeId, studioId])
+  @@map("anime_studios")
+}
+
+model WatchLink {
+  id         String        @id @default(cuid())
+  animeId    String
+  platform   WatchPlatform
+  url        String
+  isOfficial Boolean       @default(true)
+  label      String?
+  createdAt  DateTime      @default(now())
+
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@index([animeId])
+  @@map("watch_links")
+}
+
+// ==================== USER CONTEXT ====================
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String?
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // NextAuth relations
+  accounts     Account[]
+  sessions     Session[]
+
+  // App relations
+  searchQueries SearchQuery[]
+  bookmarks     Bookmark[]
+  interactions  Interaction[]
+
+  @@map("users")
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ==================== SEARCH CONTEXT ====================
+
+model SearchQuery {
+  id          String     @id @default(cuid())
+  userId      String?
+  queryText   String
+  filtersJson Json?
+  searchMode  SearchMode @default(TFIDF)
+  resultsCount Int?
+  createdAt   DateTime   @default(now())
+
+  user    User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  results SearchResult[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_queries")
+}
+
+model SearchResult {
+  id              String   @id @default(cuid())
+  queryId         String
+  animeId         String
+  rankPosition    Int
+  score           Float
+  explanationJson Json?
+  createdAt       DateTime @default(now())
+
+  query SearchQuery @relation(fields: [queryId], references: [id], onDelete: Cascade)
+  anime Anime       @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@index([queryId])
+  @@index([animeId])
+  @@map("search_results")
+}
+
+// ==================== USER INTERACTIONS ====================
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  animeId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, animeId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+model Interaction {
+  id        String    @id @default(cuid())
+  userId    String?
+  animeId   String
+  eventType EventType
+  weight    Float     @default(1.0)
+  sessionId String?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  anime Anime  @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@index([animeId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("interactions")
+}
+
+// ==================== INGESTION CONTEXT ====================
+
+model IngestionJob {
+  id          String    @id @default(cuid())
+  source      String    // "jikan_top", "jikan_seasonal", "jikan_search"
+  status      JobStatus @default(PENDING)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  itemsTotal  Int?
+  itemsDone   Int?
+  message     String?   @db.Text
+  errorDetail String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("ingestion_jobs")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String   // userId or "system"
+  action    String
+  target    String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([actor])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== IR EVALUATION ====================
+
+model RelevanceJudgment {
+  id         String         @id @default(cuid())
+  queryText  String
+  animeId    String
+  label      Int            // 0-3 scale
+  assessor   String         @default("manual")
+  notes      String?
+  createdAt  DateTime       @default(now())
+
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@index([queryText])
+  @@index([animeId])
+  @@map("relevance_judgments")
+}
+
+model EvaluationRun {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  mode          SearchMode
+  queryCount    Int
+  precisionAtK  Float?   // Precision@10
+  recallAtK     Float?   // Recall@10
+  map           Float?   // Mean Average Precision
+  mrr           Float?   // Mean Reciprocal Rank
+  ndcg          Float?   // nDCG@10
+  resultJson    Json?    // full results breakdown
+  createdAt     DateTime @default(now())
+
+  @@map("evaluation_runs")
+}

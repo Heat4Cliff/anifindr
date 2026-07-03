@@ -1,0 +1,3 @@
+# Example only
+# Replace with your real tunnel UUID and credentials path when you provision the tunnel in Cloudflare Zero Trust.
+# The tunnel should point to the internal web service running on port 3000.

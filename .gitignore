@@ -1,0 +1,10 @@
+.env
+.env.local
+node_modules
+.next
+dev.log
+docs/
+*.md
+!README.md
+WhatsApp*.jpeg
+ChatGPT*.png
