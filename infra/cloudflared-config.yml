@@ -1,7 +1,0 @@
-tunnel: anime-ir-tunnel
-credentials-file: /etc/cloudflared/credentials.json
-
-ingress:
-  - hostname: anime.example.com
-    service: http://web:3000
-  - service: http_status:404

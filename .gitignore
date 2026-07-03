@@ -4,6 +4,8 @@ node_modules
 .next
 dev.log
 docs/
+deployment/
+infra/
 *.md
 !README.md
 WhatsApp*.jpeg
