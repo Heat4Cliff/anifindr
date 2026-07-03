@@ -1,42 +1,20 @@
 # Anime IR Enterprise
 
-Paket dokumen ultimate untuk sistem web information retrieval anime berbasis Next.js, PostgreSQL, Prisma, Docker, dan Cloudflare Tunnel.
+AniFindr adalah proyek sistem temu kembali informasi (Information Retrieval) yang dirancang khusus untuk mempermudah penggemar anime mencari tontonan berdasarkan relevansi konteks sinopsis, judul, maupun genre dengan menggunakan metode komputasi teks modern.
 
-## Isi paket
+#Teknologi di Balik Layar
 
-- 01_PRD.md
-- 02_SDD.md
-- 03_DDD.md
-- 04_UI_UX.md
-- 05_API_SPEC.md
-- 06_SECURITY.md
-- 07_DEVOPS_DEPLOYMENT.md
-- 08_IR_EVALUATION.md
-- 09_DATABASE_SCHEMA.md
-- 10_ROADMAP.md
-- deployment/docker-compose.yml
-- deployment/.env.example
-- infra/cloudflared-config.yml
-- infra/cloudflared-tunnel.example.yml
+-Information Retrieval (TF-IDF)
+Mesin pencari inti kami menggunakan algoritma Term Frequency-Inverse Document Frequency untuk menganalisis dan mencocokkan kata kunci pencarian Anda dengan sinopsis, judul, dan genre anime secara akurat.
+-Next.js 15 (App Router)
+Dibangun dengan framework React modern Next.js 15 yang memanfaatkan App Router dan Server Components untuk memastikan rendering yang sangat cepat dan optimasi SEO terbaik.
+-Prisma ORM
+Manajemen database modern yang *type-safe* menggunakan Prisma untuk memproses ribuan data anime dengan struktur relasional yang kompleks secara efisien.
+-TypeScript
+Pengembangan *end-to-end* yang kuat dan meminimalisir *runtime error* berkat penggunaan *static typing* dari TypeScript.
+-Tailwind CSS & Glassmorphism
+Desain antarmuka (UI) dibangun dengan utilitas CSS modern serta efek *glassmorphism* untuk memberikan estetika web aplikasi kekinian yang responsif dan elegan.
+-AniList GraphQL API
+Sumber data anime di sinkronisasikan secara *real-time* dari AniList menggunakan GraphQL untuk menjaga direktori kami agar selalu *up-to-date*.
 
-## Ringkasan arsitektur
-
-- Frontend dan fullstack app: Next.js App Router
-- Styling: Tailwind CSS + design system components + motion animation
-- Database: PostgreSQL
-- ORM: Prisma
-- Data source: Jikan API
-- Search: hybrid retrieval, TF-IDF baseline + semantic ranking + re-ranking
-- Deployment: Debian Server via Docker Compose
-- Public access: Cloudflare Tunnel untuk frontend domain sendiri
-
-## Catatan implementasi
-
-Dokumen ini disusun untuk kebutuhan tugas akhir Information Retrieval. Fokus utama ada pada:
-- indexing
-- ranking
-- evaluation
-- relevance judgment
-- experiment tracking
-
-Bukan hanya pada UI katalog anime.
+#######################################################################
