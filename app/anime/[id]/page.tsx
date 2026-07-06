@@ -93,9 +93,9 @@ export default async function AnimeDetailPage({ params }: Props) {
 
       <div className="grid-detail" style={{ display: "grid", gap: "2rem", alignItems: "start" }}>
         {/* LEFT: Poster + Info Sidebar */}
-        <div style={{ position: "sticky", top: 80 }}>
+        <div className="sticky-sidebar">
           {/* Poster */}
-          <div style={{
+          <div className="poster-container" style={{
             borderRadius: "var(--radius)", overflow: "hidden",
             background: "var(--bg-elevated)",
             aspectRatio: "2/3", marginBottom: "1rem",

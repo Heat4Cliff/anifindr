@@ -168,6 +168,9 @@ body {
 .grid-detail {
   grid-template-columns: 280px 1fr;
 }
+.grid-search {
+  grid-template-columns: 240px 1fr;
+}
 
 @media (max-width: 768px) {
   .hide-mobile { display: none !important; }
@@ -178,6 +181,23 @@ body {
   }
   .grid-detail {
     grid-template-columns: 1fr;
+  }
+  .grid-search {
+    grid-template-columns: 1fr;
+  }
+  .poster-container {
+    width: 200px;
+    margin: 0 auto;
+  }
+}
+
+.sticky-sidebar {
+  position: static;
+}
+@media (min-width: 769px) {
+  .sticky-sidebar {
+    position: sticky;
+    top: 80px;
   }
 }
 

@@ -65,7 +65,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const minScore = params.minScore ? parseFloat(params.minScore) : undefined;
   const type = params.type ?? "";
 
-  let results = [];
+  let results: any[] = [];
   let total = 0;
   let totalPages = 0;
 
@@ -125,7 +125,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: "1.5rem", alignItems: "start" }}>
+      <div className="grid-search" style={{ display: "grid", gap: "1.5rem", alignItems: "start" }}>
         {/* Filter Panel */}
         <aside>
           <form method="GET" action="/search">

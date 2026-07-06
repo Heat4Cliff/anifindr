@@ -52,7 +52,7 @@ export default function AnimeCard({
     <Link
       href={`/anime/${id}`}
       id={`anime-card-${id}`}
-      style={{ textDecoration: "none", display: "block" }}
+      style={{ textDecoration: "none", display: "block", height: "100%" }}
     >
       <article
         className="card-hover"
@@ -130,6 +130,7 @@ export default function AnimeCard({
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
+            minHeight: "2.275em",
           }}>
             {titleEnglish || title}
           </h3>
