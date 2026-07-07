@@ -111,16 +111,27 @@ export default async function HomePage() {
           </AnimateOnScroll>
 
           <AnimateOnScroll animation="fadeUp" delay={0.2}>
-            <TypewriterText
-              text="Sistem pencarian cerdas berbasis TF-IDF dan hybrid ranking. Temukan, bandingkan, dan eksplorasi ribuan anime dengan presisi tinggi."
-              delay={40}
-              style={{
-                fontSize: "1.1rem", color: "var(--text-secondary)",
-                maxWidth: 520, margin: "0 auto 2.5rem",
+            <div style={{ position: "relative", maxWidth: 520, margin: "0 auto 2.5rem" }}>
+              {/* Invisible placeholder to reserve exact height on any screen size */}
+              <div style={{
+                fontSize: "1.1rem", 
                 lineHeight: 1.7,
-                minHeight: "3.4em" /* Prevent layout shift while typing */
-              }}
-            />
+                visibility: "hidden" 
+              }}>
+                Sistem pencarian cerdas berbasis TF-IDF dan hybrid ranking. Temukan, bandingkan, dan eksplorasi ribuan anime dengan presisi tinggi.
+              </div>
+              
+              <div style={{ position: "absolute", inset: 0 }}>
+                <TypewriterText
+                  text="Sistem pencarian cerdas berbasis TF-IDF dan hybrid ranking. Temukan, bandingkan, dan eksplorasi ribuan anime dengan presisi tinggi."
+                  delay={40}
+                  style={{
+                    fontSize: "1.1rem", color: "var(--text-secondary)",
+                    lineHeight: 1.7,
+                  }}
+                />
+              </div>
+            </div>
           </AnimateOnScroll>
 
           {/* Search form */}
