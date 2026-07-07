@@ -63,15 +63,38 @@ export function applyHybridRanking(
 
   const currentYear = new Date().getFullYear();
 
+  // Dynamically adjust weights based on active components
+  let activeWeights = { ...weights };
+  const isTextActive = maxTfIdf > 0;
+  const isContentActive = preferredGenres.length > 0;
+
+  if (!isTextActive) {
+    // Distribute 40% text weight to rating and popularity
+    activeWeights.ratingQuality += activeWeights.textRelevance * 0.5; // +20%
+    activeWeights.popularityFreshness += activeWeights.textRelevance * 0.5; // +20%
+    activeWeights.textRelevance = 0;
+  }
+  if (!isContentActive) {
+    // Distribute 40% content/user weight to rating and popularity
+    const unused = activeWeights.contentSimilarity + activeWeights.userPreference;
+    activeWeights.ratingQuality += unused * 0.5; // +20%
+    activeWeights.popularityFreshness += unused * 0.5; // +20%
+    activeWeights.contentSimilarity = 0;
+    activeWeights.userPreference = 0;
+  }
+
+  // Normalize weights just in case
+  const sumWeights = Object.values(activeWeights).reduce((a, b) => a + b, 0);
+  for (const key in activeWeights) {
+    activeWeights[key as keyof HybridWeights] /= sumWeights;
+  }
+
   const ranked = results.map((item) => {
     // 1. Text relevance (TF-IDF score)
-    const textScore = normalize(item.relevanceScore, minTfIdf, maxTfIdf);
+    const textScore = isTextActive ? normalize(item.relevanceScore, minTfIdf, maxTfIdf) : 0;
 
     // 2. Content similarity (genre Jaccard with preferred genres)
-    const contentScore =
-      preferredGenres.length > 0
-        ? genreJaccard(item.genres, preferredGenres)
-        : 0;
+    const contentScore = isContentActive ? genreJaccard(item.genres, preferredGenres) : 0;
 
     // 3. User preference match (placeholder - would use click history in production)
     const userScore = contentScore; // reuse genre match as proxy
@@ -80,20 +103,17 @@ export function applyHybridRanking(
     const ratingScore = normalize(item.score ?? 0, minScore, maxScore);
 
     // 5. Popularity + freshness
-    // Lower popularity number = more popular
     const popScore = 1 - normalize(item.popularity ?? maxPop, minPop, maxPop);
-    const yearScore = item.year
-      ? normalize(item.year, 1960, currentYear)
-      : 0;
+    const yearScore = item.year ? normalize(item.year, 1960, currentYear) : 0;
     const popFreshnessScore = (popScore * 0.7 + yearScore * 0.3);
 
     // Combined hybrid score
     const hybridScore =
-      textScore * weights.textRelevance +
-      contentScore * weights.contentSimilarity +
-      userScore * weights.userPreference +
-      ratingScore * weights.ratingQuality +
-      popFreshnessScore * weights.popularityFreshness;
+      textScore * activeWeights.textRelevance +
+      contentScore * activeWeights.contentSimilarity +
+      userScore * activeWeights.userPreference +
+      ratingScore * activeWeights.ratingQuality +
+      popFreshnessScore * activeWeights.popularityFreshness;
 
     return {
       ...item,

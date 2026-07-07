@@ -142,13 +142,9 @@ export function parseSmartQuery(rawQuery: string): ParsedQuery {
       continue;
     }
 
-    // Everything else is a potential title term
     titleTerms.push(word);
     allSearchTerms.push(word);
   }
-
-  // Add genre terms to search terms too (for searchVector matching)
-  allSearchTerms.push(...genreTerms);
 
   return { titleTerms, genreTerms, year, status, type, allSearchTerms };
 }
@@ -341,13 +337,16 @@ export async function searchAnime(
   if (effectiveType) where.type = { equals: effectiveType, mode: Prisma.QueryMode.insensitive };
 
   // Determine sort order
-  const orderBy: Prisma.AnimeOrderByWithRelationInput[] = [];
-  if (sort === "score") orderBy.push({ score: "desc" });
-  else if (sort === "rank") orderBy.push({ rank: "asc" });
-  else if (sort === "popularity") orderBy.push({ popularity: "asc" });
-  else if (sort === "year") orderBy.push({ year: "desc" });
+  const orderBy: any[] = [];
+  if (sort === "score") orderBy.push({ score: { sort: "desc", nulls: "last" } });
+  else if (sort === "rank") orderBy.push({ rank: { sort: "asc", nulls: "last" } });
+  else if (sort === "popularity") orderBy.push({ popularity: { sort: "asc", nulls: "last" } });
+  else if (sort === "year") orderBy.push({ year: { sort: "desc", nulls: "last" } });
   else if (sort === "title") orderBy.push({ title: "asc" });
-  orderBy.push({ score: "desc" }); // secondary sort
+  
+  // Secondary sort to ensure high quality results are fetched from DB first
+  orderBy.push({ score: { sort: "desc", nulls: "last" } });
+  orderBy.push({ popularity: { sort: "asc", nulls: "last" } });
 
   const [animes, total] = await Promise.all([
     prisma.anime.findMany({
